@@ -56,11 +56,7 @@
 
 #define WCD_MBHC_BTN_PRESS_COMPL_TIMEOUT_MS  50
 #define ANC_DETECT_RETRY_CNT 7
-#ifdef CONFIG_VENDOR_LEECO
 #define WCD_MBHC_SPL_HS_CNT  1
-#else
-#define WCD_MBHC_SPL_HS_CNT  2
-#endif
 
 static struct wake_lock mbhc_button_wakelock;
 static struct delayed_work mbhc_in3p_button_dwork;
@@ -75,6 +71,8 @@ static int button_intr_count = 0;
 #endif
 static struct wcd_mbhc *g_mbhc;
 static struct delayed_work mbhc_pending_dwork;
+static struct delayed_work mbhc_in3p_button_dwork;
+static int det_extn_cable_en;
 static int hph_irq = 0;
 static int headset_detect_enable = -1;
 static int headset_swap_backmic = -1;
@@ -85,6 +83,7 @@ bool letv_typec_4_pole = false;
 extern int tasha_codec_enable_standalone_micbias(struct snd_soc_codec *codec,
 						 int micb_num,
 						 bool enable);
+#endif
 
 module_param(det_extn_cable_en, int,
 		S_IRUGO | S_IWUSR | S_IWGRP);
@@ -728,11 +727,7 @@ static void wcd_mbhc_report_plug(struct wcd_mbhc *mbhc, int insertion,
 		if (mbhc->mbhc_cb->hph_pa_on_status)
 			is_pa_on = mbhc->mbhc_cb->hph_pa_on_status(codec);
 
-#ifdef CONFIG_PRODUCT_LE_X2
 		if (!(mbhc->impedance_detect) &&
-#else
-		if (mbhc->impedance_detect &&
-#endif
 			mbhc->mbhc_cb->compute_impedance &&
 			(mbhc->mbhc_cfg->linein_th != 0) &&
 			(!is_pa_on)) {
@@ -1452,12 +1447,18 @@ correct_plug_type:
 				in3p_retry = 0;
 				headset_swap_backmic = 1;
 				if (!mbhc_hold_in3p_dwork) {
+#if 0
+					mbhc_hold_in3p_dwork = true;
+					schedule_delayed_work(&mbhc_in3p_button_dwork,
+							usecs_to_jiffies(MBHC_IN3P_BUTTON_TIMEOUT));
+#else
 					mbhc->btn_press_intr = false;
 					reinit_completion(&mbhc->btn_press_compl);
 					mbhc->mbhc_cb->irq_control(codec,
 							mbhc->intr_ids->mbhc_btn_press_intr, true);
 					mbhc->mbhc_cb->irq_control(codec,
 							mbhc->intr_ids->mbhc_btn_release_intr, true);
+#endif
 				} else {
 					pr_info("%s: need re-schedule!!\n", __func__);
 				}
@@ -1533,7 +1534,7 @@ correct_plug_type:
 		 * instead of hogging system by contineous polling, wait for
 		 * sometime and re-check stop request again.
 		 */
-		msleep(180);
+		msleep(100);
 		if (hs_comp_res && (spl_hs_count < WCD_MBHC_SPL_HS_CNT)) {
 			spl_hs = wcd_mbhc_check_for_spl_headset(mbhc,
 								&spl_hs_count);
