@@ -1728,6 +1728,7 @@ static struct worker *create_worker(struct worker_pool *pool)
 
 	set_user_nice(worker->task, pool->attrs->nice);
 	kthread_bind_mask(worker->task, pool->attrs->cpumask);
+	worker->task->kthread_per_cpu = true;
 
 	/* prevent anyone from meddling with cpumask of workqueue workers */
 	worker->task->flags |= PF_NO_SETAFFINITY;
