@@ -1331,6 +1331,9 @@ static void __queue_work(int cpu, struct workqueue_struct *wq,
 	    WARN_ON_ONCE(!is_chained_work(wq)))
 		return;
 retry:
+	if (req_cpu == WORK_CPU_UNBOUND)
+		cpu = raw_smp_processor_id();
+
 	/* pwq which will be used unless @work is executing elsewhere */
 	if (!(wq->flags & WQ_UNBOUND))
 		pwq = per_cpu_ptr(wq->cpu_pwqs, cpu);
@@ -1470,7 +1473,10 @@ static void __queue_delayed_work(int cpu, struct workqueue_struct *wq,
 	dwork->cpu = cpu;
 	timer->expires = jiffies + delay;
 
-	add_timer_on(timer, cpu);
+	if (unlikely(cpu != WORK_CPU_UNBOUND))
+		add_timer_on(timer, cpu);
+	else
+		add_timer(timer);
 }
 
 /**
@@ -1723,9 +1729,8 @@ static struct worker *create_worker(struct worker_pool *pool)
 	kthread_bind_mask(worker->task, pool->attrs->cpumask);
 	worker->task->kthread_per_cpu = true;
 
-	/* prevent anyone from meddling with cpumask of workqueue workers */
+	/* prevent userland from meddling with cpumask of workqueue workers */
 	worker->task->flags |= PF_NO_SETAFFINITY;
-	worker->task->kthread_per_cpu = true;
 
 	/* successful, attach the worker to the pool */
 	worker_attach_to_pool(worker, pool);
@@ -4334,6 +4339,10 @@ bool workqueue_congested(int cpu, struct workqueue_struct *wq)
 	bool ret;
 
 	rcu_read_lock_sched();
+
+	if (cpu == WORK_CPU_UNBOUND)
+		cpu = smp_processor_id();
+
 	if (!(wq->flags & WQ_UNBOUND))
 		pwq = per_cpu_ptr(wq->cpu_pwqs, cpu);
 	else
