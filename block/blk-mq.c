@@ -346,7 +346,7 @@ static void blk_mq_ipi_complete_request(struct request *rq)
 	put_cpu();
 }
 
-static void __blk_mq_complete_request(struct request *rq)
+void __blk_mq_complete_request(struct request *rq)
 {
 	struct request_queue *q = rq->q;
 
