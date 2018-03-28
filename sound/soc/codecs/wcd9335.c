@@ -13164,7 +13164,6 @@ static struct attribute_group sound_control_attr_group = {
 static struct kobject *sound_control_kobj;
 #endif
 
->>>>>>> 3c7f2fc8449... X2: fix headphones
 static int tasha_codec_probe(struct snd_soc_codec *codec)
 {
 	struct wcd9xxx *control;
@@ -13942,7 +13941,6 @@ static int tasha_probe(struct platform_device *pdev)
 	}
 #endif
 
->>>>>>> 3c7f2fc8449... X2: fix headphones
 	dev_info(&pdev->dev, "%s: Tasha driver probe done\n", __func__);
 	return ret;
 
