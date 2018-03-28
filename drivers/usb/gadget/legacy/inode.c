@@ -1602,9 +1602,6 @@ delegate:
 	if (value >= 0 && dev->state != STATE_DEV_SETUP) {
 		req->length = value;
 		req->zero = value < w_length;
-<<<<<<< HEAD
-		value = usb_ep_queue (gadget->ep0, req, GFP_ATOMIC);
-=======
 
 		++dev->udc_usage;
 		spin_unlock (&dev->lock);
@@ -1612,7 +1609,6 @@ delegate:
 		spin_lock(&dev->lock);
 		--dev->udc_usage;
 		spin_unlock(&dev->lock);
->>>>>>> 113b54eefe1a8ed788523822e3afc3185473f5bc
 		if (value < 0) {
 			DBG (dev, "ep_queue --> %d\n", value);
 			req->status = 0;
