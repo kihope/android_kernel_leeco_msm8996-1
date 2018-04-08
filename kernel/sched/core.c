@@ -8321,7 +8321,6 @@ int set_cpus_allowed_ptr(struct task_struct *p, const struct cpumask *new_mask)
 	get_adjusted_cpumask(p, &adjusted_mask, new_mask);
 	new_mask = &adjusted_mask;
 
-	new_mask = adjust_cpumask(p, new_mask);
 	rq = task_rq_lock(p, &flags);
 
 	if (cpumask_equal(&p->cpus_allowed, new_mask))
